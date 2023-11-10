@@ -1,0 +1,249 @@
+#!/bin/bash
+
+inputFile() {
+    echo '
+        [
+        {
+            "scene": "open-account",
+            "rq_body": {
+                "account_number": "[replaceThis]",
+                "account_name": "[replaceThis]",
+                "open_date": "[replaceThis]",
+                "maturity_date": "[replaceThis]",
+                "creditLimit": "[replaceThis]"
+            }
+        },
+        {
+            "scene": "open-account",
+            "rq_body": {
+                "account_number": "123",
+                "account_name": "123",
+                "open_date": "123",
+                "maturity_date": "123",
+                "creditLimit": "123"
+            }
+        },
+        {
+            "scene": "open-account",
+            "rq_body": {
+                "account_number": "234",
+                "account_name": "21",
+                "open_date": "123123",
+                "maturity_date": "34234",
+                "creditLimit": "213234",
+                "test": "213234"
+            }
+        }
+    ]
+    '
+}
+
+# Check if a file is provided as an argument
+if [ $# -eq 0 ]; then
+    echo "No input file provided. Generating an empty input file and exiting."
+    inputFile > input.json
+    exit 1
+fi
+
+# Read the input file
+input_file="$1"
+scenes=$(jq -c '.[]' "$input_file")
+
+normalize_scene() {
+    local scene="$1"
+    if [[ "$scene" =~ ^open[-_]?account$ ]]; then
+        echo "open-account"
+    elif [[ "$scene" =~ ^disburse(|ment)$ ]]; then
+        echo "disbursement"
+    else
+        echo "unsupported"
+    fi
+}
+
+declare -A scene_count
+declare -A scene_bodies
+
+for scene in $scenes; do
+    normalized_scene=$(normalize_scene "$(jq -r '.scene' <<< "$scene")")
+    if [ "$normalized_scene" != "unsupported" ]; then
+        ((scene_count["$normalized_scene"]++))
+
+        scene_bodies["$normalized_scene"]+="$(jq -c '.rq_body' <<< "$scene"),"
+    fi
+done
+
+# Loop through the scene names in the associative array
+for scene in "${!scene_count[@]}"; do
+    # Remove the trailing comma from the request bodies
+    body_data="${scene_bodies["$scene"]%,}"
+
+    # Print the scene name and the count of scenes
+    echo "Scene: $scene, Count: ${scene_count["$scene"]}"
+
+    # Create the output file for the current scene
+    output_file="${scene}_collection.json"
+    echo '[' > "$output_file"
+    
+    # Create the header for the scene
+    header_json='{
+        "scene": "'$scene'",
+        "requests": ['
+    echo -n "$header_json" >> "$output_file"
+    
+    # Add the request bodies for the scene
+    echo "$body_data" >> "$output_file"
+
+    # Create the footer for the scene
+    footer_json=']}'
+    echo -n "$footer_json" >> "$output_file"
+
+    # Close the JSON array for the current scene
+    echo ']' >> "$output_file"
+done
+
+complete all the todo, I to do like this edify code
+
+#todo -- for open account I want it to follow this pattern:
+#todo -- header start
+{
+	"info": {
+		"_postman_id": "44d36072-e193-46f6-9ec2-32130719eb64",
+		"name": "#todo -- collection name = scene name",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25372326"
+	},
+	"item": [
+        #todo -- header end
+        #todo -- body start
+		{
+			"name": "#todo -- scene name + count",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var rq_body = JSON.parse(request.data);",
+							"var rs_body = JSON.parse(responseBody);\r",
+							"var moment = require(\"moment\")\r",
+							"var utils = eval(postman.getEnvironmentVariable(\"Utils\"));\r",
+							"utils.LogResponse();\r",
+							"tests[\"[Case#1] Status code is 200\"] = responseCode.code == 200;",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var moment = require(\"moment\");",
+							"var utils = eval(postman.getEnvironmentVariable(\"Utils\"));",
+							"postman.setEnvironmentVariable(\"open_date\", moment(\""#todo default = 2023-01-01\ if input.json provide then use that,").format('YYYY-MM-DD'));",
+							"postman.setEnvironmentVariable(\"maturity_date\", moment(\" #todo default = 2023-05-15\ if input.json provide then use that, 2023-05-15\").format('YYYY-MM-DD'));",
+							"postman.setEnvironmentVariable(\"datetime\", moment().format());",
+							"postman.setEnvironmentVariable(\"message-id\", utils.UUIDv4());",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-request-id",
+						"value": "{{message-id}}"
+					},
+					{
+						"key": "x-job-id",
+						"value": "{{message-id}}"
+					},
+					{
+						"key": "x-real-ip",
+						"value": "127.0.0.1"
+					},
+					{
+						"key": "x-caller-service",
+						"value": "FrontEnd"
+					},
+					{
+						"key": "x-caller-domain",
+						"value": "Front"
+					},
+					{
+						"key": "datetime",
+						"value": "{{datetime}}"
+					},
+					{
+						"key": "accept",
+						"value": "application/json"
+					},
+					{
+						"key": "accept-language",
+						"value": ""
+					},
+					{
+						"key": "accept-encoding",
+						"value": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-device",
+						"value": ""
+					},
+					{
+						"key": "user-agent",
+						"value": ""
+					},
+					{
+						"key": "client_id",
+						"value": "{{API_ClientId}}"
+					},
+					{
+						"key": "secret",
+						"value": "{{API_ClientSecret}}"
+					},
+					{
+						"key": "x-application",
+						"value": ""
+					},
+					{
+						"key": "x-channel",
+						"value": ""
+					},
+					{
+						"key": "user-agent",
+						"value": ""
+					},
+					{
+						"key": "Fnx-Header",
+						"value": "{\"identity\":{\"userRoles\":[\"developer\"]}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"rq_header\": {\r\n        \"x-request-id\": \"{{message-id}}\",\r\n        \"message-id\": \"{{message-id}}\",\r\n        \"x-job-id\": \"{{message-id}}\",\r\n        \"x-real-ip\": \"127.0.0.1\",\r\n        \"x-caller-service\": \"FrontEnd\",\r\n        \"x-caller-domain\": \"Front\",\r\n        \"datetime\": \"{{datetime}}\",\r\n        \"requested-service\": \"/dloan-account/opened-account-journal\",\r\n        \"requested-service-version\": \"v1\",\r\n        \"accept\": \"application/json\",\r\n        \"accept-language\": \"\",\r\n        \"accept-encoding\": \"\",\r\n        \"Content-Type\": \"application/json\",\r\n        \"x-device\": \"\",\r\n        \"user-agent\": \"\",\r\n        \"client_id\": \"{{API_ClientId}}\",\r\n        \"secret\": \"{{API_ClientSecret}}\",\r\n        \"x-application\": \"\",\r\n        \"x-channel\": \"\",\r\n        \"Fnx-Header\": \"{'identity':{'userRoles':['developer']}}\"\r\n    },\r\n    \"rq_body\": {\r\n        \"account_number\": \"todo -- use the provided, default = [to_be_replace]\",\r\n        \"open_date\": \"{{open_date}}\",\r\n        \"status\": \"active\",\r\n        \"account_branch\": \"todo -- use the provided, default = 1032\",\r\n        \"account_name\": \"todo -- use the provided, default = [to_be_replace]\",\r\n        \"product_name\": \"todo -- use the provided, default = 2010010000000\",\r\n        \"customer_type\": \"todo -- use the provided, default = 1234\",\r\n        \"maturity_date\": \"{{maturity_date}}\",\r\n        \"credit_limit\":\"todo -- use the provided, default = [to_be_replace]\,\r\n        \"is_revolving\": \"todo -- use the provided, default = false\",\r\n,\r\n        \"is_flat_rate\": \"todo -- use the provided, default = [to_be_replace]\",\r\n,\r\n        \"is_adjusting\": \"todo -- use the provided, default = [to_be_replace]\",\r\n,\r\n        \"is_close_awaiting\": false,\r\n        \"plan\": {\r\n            \"interest_plan_name\": \"todo -- use the provided, default = \"intlazada\",\r\n            \"penalty_plan_name\": \"todo -- use the provided, default = \"penalty28\",\r\n           \"transaction_plan_name\": \"todo -- use the provided, default = \"transaction02\",\r\n            \"payment_plan_name\": \"todo -- use the provided, default = \"pmtlazada\",\r\n            \"grace_plan_name\":\"todo -- use the provided, default = \"gracelazada\"\r\n        }\r\n    }\r\n}"
+				},
+                #todo -- body end
+                #todo -- footer start
+				"url": {
+					"raw": "{{url-smith-dloan-kafka-api}}/raw_msg/{{host-smith-dloan-kafka}}/open-account",
+					"host": [
+						"{{url-smith-dloan-kafka-api}}"
+					],
+					"path": [
+						"raw_msg",
+						"{{host-smith-dloan-kafka}}",
+						"open-account"
+					]
+				}
+			},
+			"response": []
+		}
+        #todo -- footer end
+     
